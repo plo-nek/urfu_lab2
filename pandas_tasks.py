@@ -7,31 +7,24 @@ from grader_contracts.pandas_tasks import TitanicInput, TitanicSummary
 
 
 def analyze_titanic(data: TitanicInput) -> TitanicSummary:
-     # 1. Загрузка датасета
     df = pd.read_csv(data.csv_path)
 
-    # 2. Количество строк
     row_count = int(df.shape[0])
 
-    # 3. Пропуски по столбцам
     missing_by_column = df.isna().sum().to_dict()
 
-    # 4. Пассажиры старше 30 лет (NaN автоматически не учитываются)
     adults_over_30_count = int((df["Age"] > 30).sum())
 
-    # 5. Средний возраст по классам (NaN исключаются)
     mean_age_by_pclass = {
         int(k): float(v)
         for k, v in df.groupby("Pclass")["Age"].mean().items()
     }
 
-    # 6. Доля выживших по классам
     survival_rate_by_pclass = {
         int(k): float(v)
         for k, v in df.groupby("Pclass")["Survived"].mean().items()
     }
 
-    # 7. Пять наибольших тарифов по убыванию
     highest_fares = (
         df["Fare"]
         .sort_values(ascending=False)
