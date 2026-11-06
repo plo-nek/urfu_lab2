@@ -9,34 +9,27 @@ FEATURES = ["FSIQ", "VIQ", "PIQ", "Weight", "Height"]
 TARGET = "MRI_Count"
 
 def analyze_brain_correlations(data: BrainDataInput) -> BrainCorrelationSummary:
-    # 1. Загрузка: разделитель tab, явно обрабатываем NA
     df = pd.read_csv(data.csv_path, sep="\t", na_values=["NA"])
 
-    # 2. Разделение по полу
     men = df[df["Gender"] == "Male"]
     women = df[df["Gender"] == "Female"]
 
     men_count = int(men.shape[0])
     women_count = int(women.shape[0])
 
-    # 3. Корреляции Пирсона с MRI_Count внутри каждой группы
-    # pandas.corr() по умолчанию игнорирует NaN (использует попарное удаление)
     women_corr = women[FEATURES + [TARGET]].corr(method="pearson")[TARGET].drop(TARGET)
     men_corr = men[FEATURES + [TARGET]].corr(method="pearson")[TARGET].drop(TARGET)
 
     women_mri_correlation = {k: float(v) for k, v in women_corr.items()}
     men_mri_correlation = {k: float(v) for k, v in men_corr.items()}
 
-    # 4. Поиск признака с наибольшим модулем корреляции
     best_feature = None
     best_abs = -1.0
 
-    # Итерируемся по всем признакам и проверяем корреляции в обеих группах
     for feature in FEATURES:
         w_val = abs(women_mri_correlation.get(feature, 0.0))
         m_val = abs(men_mri_correlation.get(feature, 0.0))
         
-        # Если у признака корреляция больше текущего максимума в любой из групп
         if w_val > best_abs:
             best_abs = w_val
             best_feature = feature
@@ -58,7 +51,6 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import seaborn as sns
 
-    # Локальный тест
     result = analyze_brain_correlations(BrainDataInput(csv_path="brainsize.txt"))
 
     print("=== Количество наблюдений ===")
@@ -76,11 +68,9 @@ if __name__ == "__main__":
     print("\n=== Сильнейший признак ===")
     print(result.strongest_mri_feature)
 
-    # --- Визуализация (для отчёта) ---
     df = pd.read_csv("brainsize.txt", sep="\t", na_values=["NA"])
     plot_features = ["FSIQ", "VIQ", "PIQ", "Weight", "Height"]
 
-    # Scatter plots
     fig, axes = plt.subplots(2, 3, figsize=(15, 8))
     axes = axes.ravel()
     for ax, feature in zip(axes, plot_features):
@@ -91,7 +81,6 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig("scatter_mri.png", dpi=120)
     
-    # Heatmaps
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     for ax, gender in zip(axes, ["Female", "Male"]):
         sub = df[df["Gender"] == gender][plot_features + ["MRI_Count"]]
